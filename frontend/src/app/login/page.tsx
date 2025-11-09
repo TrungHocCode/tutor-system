@@ -14,8 +14,9 @@ export default function SignInPage() {
 				<div className="self-start hidden lg:flex flex-col text-gray-300">
 					<h1 className="my-3 font-semibold text-4xl">Chào mừng trở lại</h1>
 					<p className="pr-3 text-sm opacity-75">
-						Lorem ipsum is placeholder text commonly used in the graphic, print,
-						and publishing industries for previewing layouts and visual mockups.
+						Bạn gặp khó khăn trong việc tìm gia sư phù hợp? HCMUT TUTOR sẽ giúp bạn kết nối với những gia sư xuất sắc nhất từ
+						Trường đại học Bách Khoa TP.HCM. Hãy để chúng tôi giúp bạn đạt được mục tiêu học tập của mình!
+						DM Tùng
 					</p>
 				</div>
 			</div>
