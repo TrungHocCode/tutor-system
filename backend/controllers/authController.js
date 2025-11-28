@@ -1,9 +1,8 @@
-// controllers/authController.js
 const authService = require('../services/authService');
 
 exports.registerUser = async (req, res) => {
     // Lấy dữ liệu từ body của request
-    const { Name, Email, Password, ContactInfo } = req.body;
+    const { Name, Email, Password, ContactInfo, Role } = req.body;
     
     // Kiểm tra dữ liệu đầu vào cơ bản
     if (!Name || !Email || !Password) {
@@ -12,7 +11,7 @@ exports.registerUser = async (req, res) => {
 
     try {
         // Gọi Auth Service để xử lý logic nghiệp vụ (băm mật khẩu, tạo user, tạo token)
-        const { user, token } = await authService.register({ Name, Email, Password, ContactInfo });
+        const { user, token } = await authService.register({ Name, Email, Password, ContactInfo,Role });
 
         // Trả về thành công
         res.status(201).json({ 
