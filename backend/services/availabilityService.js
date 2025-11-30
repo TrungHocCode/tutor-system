@@ -29,10 +29,12 @@ class AvailabilityService{
     async getMonthlyAvailability(tutorId, startDate, endDate) {
         const sql = `
             SELECT 
-                "AvailabilityID", "Date", "StartTime", "EndTime", "Status"
+                "AvailabilityID", 
+                to_char("Date", 'YYYY-MM-DD') as "Date", 
+                "StartTime", "EndTime", "Status"
             FROM availability 
             WHERE "TutorID" = $1
-            AND "Date" BETWEEN $2 AND $3
+            AND "Date"::DATE BETWEEN $2::DATE AND $3::DATE
             ORDER BY "Date", "StartTime";
         `;
         
@@ -46,10 +48,14 @@ class AvailabilityService{
     }
     async createAvailability(availabilityData){
         const {TutorID, Date, StartTime, EndTime} = availabilityData
-        const sql = `INSERT into availability (TutorID, Date, StartTime, EndTime)
-        VALUES ($1, $2, $3, $4)
-        RETURNING AvailabilityID, TutorID, Date, StartTime, EndTime, CreatedAt `
-
+        
+        // Đảm bảo tên cột trong SQL khớp chính xác với định nghĩa trong DB
+        const sql = `
+        INSERT INTO availability ("TutorID", "Date", "StartTime", "EndTime")
+        VALUES ($1, $2::DATE, $3, $4) 
+        RETURNING "AvailabilityID", "TutorID", "Date", "StartTime", "EndTime", "CreatedAt"
+        `; // Thêm dấu " vào tất cả tên cột
+        
         try{
             const result = await db.query(sql, [TutorID, Date, StartTime, EndTime])
             return result.rows[0]

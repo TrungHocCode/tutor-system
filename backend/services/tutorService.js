@@ -72,8 +72,8 @@ class TutorService {
         return availabilityService.getMonthlyAvailability(tutorId, startDate, endDate);
     }
     
-    async addAvailability(tutorId, data) {
-        const availabilityData = { TutorID: tutorId, ...data };
+    async addAvailability(TutorID, data) {
+        const availabilityData = { TutorID: TutorID, ...data };
         // Có thể thêm logic kiểm tra trùng lặp lịch ở đây
         return availabilityService.createAvailability(availabilityData);
     }
@@ -101,7 +101,7 @@ class TutorService {
         const availableSlots = await availabilityService.getAvailabilityByDate(tutorID, sessionDate);
         
         if (!availableSlots || availableSlots.length === 0) {
-            throw new Error(`Tutor has no available slots on ${sessionDate}.`);
+            throw new Error(`Bạn chưa thiết lập lịch rảnh nào vào ngày ${sessionDate}. Vui lòng thêm lịch rảnh trước.`);
         }
 
         const sessionStartMins = timeToMinutes(sessionStart);
@@ -120,7 +120,7 @@ class TutorService {
         }
 
         if (!isWithinAvailability) {
-            throw new Error('New session time must fit entirely within an existing available time slot.');
+            throw new Error('Giờ học này không nằm trong khung giờ rảnh (Availability) của bạn. Vui lòng kiểm tra lại lịch rảnh.');
         }
         
         return sessionService.createSession(fullSessionData);

@@ -31,15 +31,15 @@ exports.registerUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-    const { Email, Password } = req.body;
+    const { email, password } = req.body;
     
-    if (!Email || !Password) {
+    if (!email || !password) {
         return res.status(400).json({ error: 'Email and Password are required.' });
     }
 
     try {
         // Gọi Auth Service để xử lý logic đăng nhập
-        const { user, token } = await authService.login(Email, Password);
+        const { user, token } = await authService.login(email, password);
 
         // Trả về thành công
         res.status(200).json({ 

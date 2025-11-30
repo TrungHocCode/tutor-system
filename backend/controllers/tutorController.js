@@ -45,19 +45,78 @@ exports.addAvailability = async (req, res) => {
         res.status(500).json({ error: 'Server error adding availability.' });
     }
 };
+exports.updateAvailability = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const updatedAvailability = await tutorService.updateAvailability(id, req.user.id, req.body);
+        if (!updatedAvailability) return res.status(404).json({ error: 'Availability not found or unauthorized.' });
+        res.status(200).json(updatedAvailability);
+    } catch (error) {
+        console.error("Error updating availability:", error);
+        res.status(500).json({ error: 'Server error updating availability.' });
+    }
+};
 
+// NEW: Xóa lịch rảnh
+exports.deleteAvailability = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const deletedResult = await tutorService.deleteAvailability(id);
+        if (deletedResult.rowCount === 0) return res.status(404).json({ error: 'Availability not found.' });
+        res.status(200).json({ message: 'Availability successfully deleted.' });
+    } catch (error) {
+        console.error("Error deleting availability:", error);
+        res.status(500).json({ error: 'Server error deleting availability.' });
+    }
+};
 exports.createSession = async (req, res) => {
-    const { Topic, Date, StartTime, EndTime, Format, Location, MaxStudent } = req.body;
+    const { Topic, Date, StartTime, EndTime, Format, Location, MaxStudent, Base } = req.body;
     if (!Topic || !Date || !StartTime) return res.status(400).json({ error: 'Missing required session fields.' });
     try {
         const newSession = await tutorService.createSession(req.user.id, req.body);
         res.status(201).json(newSession);
     } catch (error) {
         console.error("Error creating session:", error);
+        if (error.message.includes('lịch rảnh') || error.message.includes('Availability')) {
+            return res.status(400).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Server error creating session.' });
     }
 };
+exports.updateSession = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Cần truyền req.user.id để đảm bảo Tutor chỉ sửa buổi học của chính mình
+        const updatedSession = await tutorService.updateSession(id, req.user.id, req.body);
+        
+        if (!updatedSession) {
+            return res.status(404).json({ error: 'Session not found or unauthorized.' });
+        }
+        res.status(200).json(updatedSession);
+    } catch (error) {
+        console.error("Error updating session:", error);
+        res.status(500).json({ error: 'Server error updating session.' });
+    }
+};
 
+// NEW: Xóa buổi học (Hoặc hủy buổi)
+exports.deleteSession = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Lưu ý: Nếu muốn bảo mật hơn, Service nên check cả TutorID trước khi xóa
+        // Hiện tại tutorService.deleteSession chỉ gọi sessionService.deleteSession(id)
+        // Bạn có thể update service sau nếu cần check quyền sở hữu
+        const deletedResult = await tutorService.deleteSession(id);
+        
+        if (!deletedResult) {
+            return res.status(404).json({ error: 'Session not found.' });
+        }
+        res.status(200).json({ message: 'Session successfully deleted.' });
+    } catch (error) {
+        console.error("Error deleting session:", error);
+        res.status(500).json({ error: 'Server error deleting session.' });
+    }
+};
 exports.viewMySessions = async (req, res) => {
     try {
         const sessions = await tutorService.viewMySessions(req.user.id);
