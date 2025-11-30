@@ -126,3 +126,40 @@ exports.viewMySessions = async (req, res) => {
         res.status(500).json({ error: 'Server error retrieving sessions.' });
     }
 };
+
+exports.changePassword = async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+        return res.status(400).json({ error: 'Vui lòng nhập đầy đủ mật khẩu cũ và mới.' });
+    }
+    
+    try {
+        await tutorService.changePassword(req.user.id, oldPassword, newPassword);
+        res.status(200).json({ message: "Đổi mật khẩu thành công." });
+    } catch (error) {
+        console.error("Error changing password:", error);
+        res.status(400).json({ error: error.message }); // Trả về 400 nếu sai pass cũ
+    }
+};
+
+exports.getNotificationSettings = async (req, res) => {
+    try {
+        const settings = await tutorService.getNotificationSettings(req.user.id);
+        res.status(200).json(settings);
+    } catch (error) {
+        console.error("Error getting settings:", error);
+        res.status(500).json({ error: 'Lỗi tải cấu hình thông báo.' });
+    }
+};
+
+// --- MỚI: Update Settings ---
+exports.updateNotificationSettings = async (req, res) => {
+    try {
+        // req.body sẽ là object { newLesson: true, ... }
+        const updatedSettings = await tutorService.updateNotificationSettings(req.user.id, req.body);
+        res.status(200).json({ message: "Đã lưu cài đặt", settings: updatedSettings });
+    } catch (error) {
+        console.error("Error updating settings:", error);
+        res.status(500).json({ error: 'Lỗi lưu cấu hình thông báo.' });
+    }
+};

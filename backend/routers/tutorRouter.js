@@ -11,7 +11,7 @@ router.use(authenticateToken, authorize(['tutor']));
 // 1. Quản lý Hồ sơ
 router.get('/me', tutorController.getTutorProfile);
 router.put('/me', tutorController.updateTutorProfile);
-
+router.put('/change-password', tutorController.changePassword); // <--- THÊM DÒNG NÀY
 // 2. Quản lý Lịch Trống
 router.get('/me/availability', tutorController.getTutorMonthlyAvailability); // GET lịch trống theo tháng
 router.post('/me/availability', tutorController.addAvailability);          // POST thêm lịch trống
@@ -23,5 +23,7 @@ router.post('/sessions', tutorController.createSession);                 // POST
 router.get('/sessions/me', tutorController.viewMySessions);              // GET xem các buổi học đã tạo
 router.put('/sessions/:id', tutorController.updateSession);            // PUT cập nhật buổi học
 router.delete('/sessions/:id', tutorController.deleteSession);         // DELETE buổi học
-
+// 4. Cài đặt thông báo
+router.get('/settings/notifications', tutorController.getNotificationSettings);
+router.put('/settings/notifications', tutorController.updateNotificationSettings);
 module.exports = router;
