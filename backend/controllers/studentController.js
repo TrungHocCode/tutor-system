@@ -94,3 +94,63 @@ exports.getSettings = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.getListStudents = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, search, major, year } = req.query;
+        const result = await studentService.getAllStudents({ 
+            page: parseInt(page), 
+            limit: parseInt(limit), 
+            search, major, year 
+        });
+        
+        res.status(200).json({
+            success: true,
+            data: result.students,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(result.total / limit),
+                totalItems: result.total
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getStudentDetailAdmin = async (req, res) => {
+    try {
+        const student = await studentService.getStudentById(req.params.id);
+        if (!student) return res.status(404).json({ error: 'Student not found' });
+        res.status(200).json({ success: true, data: student });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.createStudentAdmin = async (req, res) => {
+    try {
+        const newStudent = await studentService.createStudent(req.body);
+        res.status(201).json({ success: true, message: "Tạo sinh viên thành công", data: newStudent });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+exports.updateStudentAdmin = async (req, res) => {
+    try {
+        await studentService.updateStudentByAdmin(req.params.id, req.body);
+        res.status(200).json({ success: true, message: "Cập nhật thành công" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.deleteStudentAdmin = async (req, res) => {
+    try {
+        await studentService.deleteStudent(req.params.id);
+        res.status(200).json({ success: true, message: "Xóa sinh viên thành công" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

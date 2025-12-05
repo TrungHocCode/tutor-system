@@ -163,3 +163,44 @@ exports.updateNotificationSettings = async (req, res) => {
         res.status(500).json({ error: 'Lỗi lưu cấu hình thông báo.' });
     }
 };
+
+// --- ADMIN CONTROLLERS ---
+exports.getListTutors = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, search, department } = req.query;
+        const result = await tutorService.getAllTutors({ 
+            page: parseInt(page), 
+            limit: parseInt(limit), 
+            search, department 
+        });
+        res.status(200).json({
+            success: true,
+            data: result.tutors,
+            pagination: {
+                totalItems: result.total,
+                totalPages: Math.ceil(result.total / limit),
+                currentPage: parseInt(page)
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+exports.createTutorAdmin = async (req, res) => {
+    try {
+        const result = await tutorService.createTutorByAdmin(req.body);
+        res.status(201).json({ success: true, data: result });
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+};
+
+exports.deleteTutorAdmin = async (req, res) => {
+    try {
+        await tutorService.deleteTutor(req.params.id);
+        res.status(200).json({ success: true, message: 'Đã xóa gia sư' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};

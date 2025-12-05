@@ -161,6 +161,107 @@ class TutorService {
         const result = await db.query(sql, [JSON.stringify(prefs), tutorId]);
         return result.rows[0].NotificationPrefs;
     }
+    async getAllTutors({ page, limit, search, department }) {
+        const offset = (page - 1) * limit;
+        let params = [];
+        let conditions = [`u."Role" = 'tutor'`];
+        let idx = 1;
+
+        if (search) {
+            conditions.push(`(u."Name" ILIKE $${idx} OR u."Email" ILIKE $${idx} OR t."Subject" ILIKE $${idx})`);
+            params.push(`%${search}%`);
+            idx++;
+        }
+        if (department) {
+            conditions.push(`t."Department" = $${idx}`);
+            params.push(department);
+            idx++;
+        }
+
+        const whereSql = `WHERE ${conditions.join(' AND ')}`;
+        
+        const sqlData = `
+            SELECT u."ID", u."Name", u."Email", u."ContactInfo", u."CreatedAt",
+                   t."Specialization", t."Experience", t."Department", t."Subject"
+            FROM users u
+            JOIN tutor t ON u."ID" = t."TutorID"
+            ${whereSql}
+            ORDER BY u."CreatedAt" DESC
+            LIMIT $${idx} OFFSET $${idx + 1}
+        `;
+        
+        const sqlCount = `SELECT COUNT(*) FROM users u JOIN tutor t ON u."ID" = t."TutorID" ${whereSql}`;
+
+        const [rows, count] = await Promise.all([
+            db.query(sqlData, [...params, limit, offset]),
+            db.query(sqlCount, params)
+        ]);
+
+        return { 
+            tutors: rows.rows, 
+            total: parseInt(count.rows[0].count) 
+        };
+    }
+
+    // 2. Tạo Tutor mới (Transaction users + tutor)
+    async createTutorByAdmin(data) {
+        const client = await db.pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Check email
+            const exist = await client.query('SELECT "ID" FROM users WHERE "Email" = $1', [data.email]);
+            if (exist.rows.length > 0) throw new Error('Email đã tồn tại');
+
+            // Hash password
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(data.password || '123456', salt);
+
+            // Create User
+            const userRes = await client.query(`
+                INSERT INTO users ("Name", "Email", "Password", "ContactInfo", "Role")
+                VALUES ($1, $2, $3, $4, 'tutor') RETURNING "ID"
+            `, [data.name, data.email, hash, data.phone]);
+            const newId = userRes.rows[0].ID;
+
+            // Create Tutor Profile (bao gồm Department, Subject mới thêm vào DB)
+            await client.query(`
+                INSERT INTO tutor ("TutorID", "Subject", "Department", "Specialization", "Experience")
+                VALUES ($1, $2, $3, $4, $5)
+            `, [newId, data.subject, data.department, data.specialization, data.experience]);
+
+            await client.query('COMMIT');
+            return { id: newId, ...data };
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
+    }
+
+    // 3. Xóa Tutor (Transaction xóa các bảng liên quan)
+    async deleteTutor(id) {
+        const client = await db.pool.connect();
+        try {
+            await client.query('BEGIN');
+            // Xóa availability
+            await client.query('DELETE FROM availability WHERE "TutorID" = $1', [id]);
+            // Xóa session (và các bảng con của session nếu chưa setup CASCADE)
+            // Lưu ý: Cần xóa Registration, Feedback, SessionMaterial trước nếu không có ON DELETE CASCADE
+            // Giả sử xóa cơ bản:
+            await client.query('DELETE FROM tutor WHERE "TutorID" = $1', [id]);
+            await client.query('DELETE FROM users WHERE "ID" = $1', [id]);
+            
+            await client.query('COMMIT');
+            return { message: "Deleted successfully" };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
 
 }
 

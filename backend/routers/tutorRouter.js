@@ -6,24 +6,28 @@ const authorize = require('../middlewares/authorize');
 const router = express.Router();
 
 // Middleware bảo vệ: Chỉ Tutor mới có thể truy cập các route này
-router.use(authenticateToken, authorize(['tutor']));
+router.use(authenticateToken);
 
 // 1. Quản lý Hồ sơ
-router.get('/me', tutorController.getTutorProfile);
-router.put('/me', tutorController.updateTutorProfile);
-router.put('/change-password', tutorController.changePassword); // <--- THÊM DÒNG NÀY
+router.get('/me', authorize(['tutor']), tutorController.getTutorProfile);
+router.put('/me', authorize(['tutor']), tutorController.updateTutorProfile);
+router.put('/change-password', authorize(['tutor']), tutorController.changePassword); // <--- THÊM DÒNG NÀY
 // 2. Quản lý Lịch Trống
-router.get('/me/availability', tutorController.getTutorMonthlyAvailability); // GET lịch trống theo tháng
-router.post('/me/availability', tutorController.addAvailability);          // POST thêm lịch trống
-router.put('/me/availability/:id', tutorController.updateAvailability);  // PUT cập nhật lịch
-router.delete('/me/availability/:id', tutorController.deleteAvailability); // DELETE lịch
+router.get('/me/availability', authorize(['tutor']), tutorController.getTutorMonthlyAvailability); // GET lịch trống theo tháng
+router.post('/me/availability', authorize(['tutor']), tutorController.addAvailability);          // POST thêm lịch trống
+router.put('/me/availability/:id', authorize(['tutor']), tutorController.updateAvailability);  // PUT cập nhật lịch
+router.delete('/me/availability/:id', authorize(['tutor']), tutorController.deleteAvailability); // DELETE lịch
 
 // 3. Quản lý Sessions
-router.post('/sessions', tutorController.createSession);                 // POST tạo buổi học
-router.get('/sessions/me', tutorController.viewMySessions);              // GET xem các buổi học đã tạo
-router.put('/sessions/:id', tutorController.updateSession);            // PUT cập nhật buổi học
-router.delete('/sessions/:id', tutorController.deleteSession);         // DELETE buổi học
+router.post('/sessions', authorize(['tutor']), tutorController.createSession);                 // POST tạo buổi học
+router.get('/sessions/me', authorize(['tutor']), tutorController.viewMySessions);              // GET xem các buổi học đã tạo
+router.put('/sessions/:id', authorize(['tutor']), tutorController.updateSession);            // PUT cập nhật buổi học
+router.delete('/sessions/:id', authorize(['tutor']), tutorController.deleteSession);         // DELETE buổi học
 // 4. Cài đặt thông báo
-router.get('/settings/notifications', tutorController.getNotificationSettings);
-router.put('/settings/notifications', tutorController.updateNotificationSettings);
+router.get('/settings/notifications', authorize(['tutor']), tutorController.getNotificationSettings);
+router.put('/settings/notifications', authorize(['tutor']), tutorController.updateNotificationSettings);
+
+router.get('/list', authorize(['admin']), tutorController.getListTutors);
+router.post('/create', authorize(['admin']), tutorController.createTutorAdmin);
+router.delete('/delete/:id', authorize(['admin']), tutorController.deleteTutorAdmin);
 module.exports = router;
